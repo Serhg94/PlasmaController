@@ -16,7 +16,8 @@
 #define MIN_VOLTAGE 0
 #define MAX_DELAY 5
 #define MIN_DELAY 0
-#define VOLTAGE_GIST 2
+#define VOLTAGE_GIST 5
+#define VOLTAGE_DIFF_TO_REFRASH 2
 #define MIN_ARC_BY_ADC 80
 #define MAX_ARC_BY_ADC 170
 

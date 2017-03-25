@@ -82,6 +82,72 @@ int analogRead(int An_pin)
 	return (An<<8) + An_pin;
 }
 
+void displayRefrash()
+{
+	if (display_changed)
+	if (!display_mutex)
+	{
+		lcdClear();
+		sprintf(stringOne, "Real:%d\0", real_voltage);
+		lcdPuts(stringOne);
+		lcdGotoXY(1,0);
+		sprintf(stringOne, "Set: %d\0", set_voltage);
+		lcdPuts(stringOne);
+		
+		lcdGotoXY(0,11);
+		int d1 = set_delay;            // Get the integer part (678).
+		float f2 = set_delay - d1;     // Get fractional part (678.0123 - 678 = 0.0123).
+		int d2 = trunc(f2 * 10);   // Turn into integer (123).
+		sprintf(stringOne, "%d.%01d\0", d1, d2);
+		lcdPuts(stringOne);
+		if(!emerg_stop){
+			if (arc_on_out)
+			{
+				lcdGotoXY(0,9);
+				stringOne[0]=CHAR_THUNDER_CODE;
+				stringOne[1]=0;
+				lcdPuts(stringOne);
+			}
+			if (torch_on_out)
+			{
+				lcdGotoXY(1,12);
+				stringOne[0]=TORCH_CHAR_CODE;
+				stringOne[1]=0;
+				lcdPuts(stringOne);
+			}
+			if (up)
+			{
+				lcdGotoXY(1,9);
+				stringOne[0]=UP_ARROW_CODE;
+				stringOne[1]=0;
+				lcdPuts(stringOne);
+			}
+			if (down)
+			{
+				lcdGotoXY(1,9);
+				stringOne[0]=DOWN_ARROW_CODE;
+				stringOne[1]=0;
+				lcdPuts(stringOne);
+			}
+			if (delay_start_ena)
+			{
+				lcdGotoXY(1,9);
+				stringOne[0]=LOCK_CHAR_CODE;
+				stringOne[1]=0;
+				lcdPuts(stringOne);
+			}
+		}
+		else
+		{
+			lcdGotoXY(1,12);
+			stringOne[0]=E_CHAR_CODE;
+			stringOne[1]=0;
+			lcdPuts(stringOne);
+		}
+		display_changed=0;
+	}
+}
+
 ISR (TIMER1_COMPA_vect)
 {
 	displayRefrash();
@@ -165,72 +231,6 @@ void init()
 	sei();
 }
 
-void displayRefrash()
-{
-	if (display_changed)
-	if (!display_mutex)
-	{
-		lcdClear();
-		sprintf(stringOne, "Real:%d\0", real_voltage);
-		lcdPuts(stringOne);
-		lcdGotoXY(1,0);
-		sprintf(stringOne, "Set: %d\0", set_voltage);
-		lcdPuts(stringOne);
-		
-		lcdGotoXY(0,11);
-		int d1 = set_delay;            // Get the integer part (678).
-		float f2 = set_delay - d1;     // Get fractional part (678.0123 - 678 = 0.0123).
-		int d2 = trunc(f2 * 10);   // Turn into integer (123).
-		sprintf(stringOne, "%d.%01d\0", d1, d2);
-		lcdPuts(stringOne);
-		if(!emerg_stop){
-			if (arc_on_out)
-			{
-				lcdGotoXY(0,9);
-				stringOne[0]=CHAR_THUNDER_CODE;
-				stringOne[1]=0;
-				lcdPuts(stringOne);
-			}
-			if (torch_on_out)
-			{
-				lcdGotoXY(1,12);
-				stringOne[0]=TORCH_CHAR_CODE;
-				stringOne[1]=0;
-				lcdPuts(stringOne);
-			}
-			if (up)
-			{
-				lcdGotoXY(1,9);
-				stringOne[0]=UP_ARROW_CODE;
-				stringOne[1]=0;
-				lcdPuts(stringOne);
-			}
-			if (down)
-			{
-				lcdGotoXY(1,9);
-				stringOne[0]=DOWN_ARROW_CODE;
-				stringOne[1]=0;
-				lcdPuts(stringOne);
-			}
-			if (delay_start_ena)
-			{
-				lcdGotoXY(1,9);
-				stringOne[0]=LOCK_CHAR_CODE;
-				stringOne[1]=0;
-				lcdPuts(stringOne);
-			}
-		}
-		else
-		{
-			lcdGotoXY(1,12);
-			stringOne[0]=E_CHAR_CODE;
-			stringOne[1]=0;
-			lcdPuts(stringOne);
-		}
-		display_changed=0;
-	}
-}
-
 
 void encoderProcess()
 {
@@ -275,7 +275,7 @@ void logicProcess()
 		torch_on_out = torch_on;
 		//если состояние дуги не управляется входом АРКон и
 		//напряжение в таком диапазоне - считаем что дуга есть и без активного входа АРКон
-		if ((!arc_on_control_by_input)&&(torch_on))
+		if ((!arc_on_control_by_input)&&(torch_on)){
 		if ((real_voltage>=MIN_ARC_BY_ADC)&&(real_voltage<=MAX_ARC_BY_ADC))
 		{
 			if (!arc_on)
@@ -294,7 +294,7 @@ void logicProcess()
 				display_changed|=4;
 				delay_start_ena = 0;
 			}
-		}
+		}}
 		//после задержки после обнаружения дуги - сигнал на комп
 		if ((delay_start_ena)&&(millis()>set_delay*1000))
 		{
@@ -306,13 +306,13 @@ void logicProcess()
 		if ((!arc_on)||(!torch_on_out)) arc_on_out = 0;
 		//рулим высотой только если дуга есть, задержка прошла и сигнал включения факела есть
 		if (arc_on_out){
-			if (real_voltage>set_voltage)
+			if (real_voltage>set_voltage+VOLTAGE_GIST)
 			{
 				if ((up)||(!down)) display_changed|=64;
 				up=0;
 				down=1;
 			}
-			if (real_voltage<set_voltage)
+			if (real_voltage<set_voltage-VOLTAGE_GIST)
 			{
 				if ((!up)||(down)) display_changed|=64;
 				up=1;
@@ -366,7 +366,7 @@ void readStates()
 	else if (new_v<830) new_v = 375.583-0.336452*new_v;
 	else				new_v = 421.6 - 0.387097*new_v;
 
-	if (real_voltage - new_v>VOLTAGE_GIST)
+	if (real_voltage - new_v>VOLTAGE_DIFF_TO_REFRASH)
 	{
 		real_voltage = new_v;
 		display_changed|=16;
