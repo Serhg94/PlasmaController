@@ -28,15 +28,15 @@
 #define ARC_ON_OUT_DDR DDRB
 #define ARC_ON_OUT_PORT PORTB
 #define ARC_ON_OUT 4
-#define E_STOP_OUT_DDR DDRB
-#define E_STOP_OUT_PORT PORTB
-#define E_STOP_OUT 3
+#define E_STOP_OUT_DDR DDRD
+#define E_STOP_OUT_PORT PORTD
+#define E_STOP_OUT 0
 #define UP_OUT_DDR DDRD
 #define UP_OUT_PORT PORTD
-#define UP_OUT 0
-#define DOWN_OUT_DDR DDRD
-#define DOWN_OUT_PORT PORTD
-#define DOWN_OUT 1
+#define UP_OUT 1
+#define DOWN_OUT_DDR DDRB
+#define DOWN_OUT_PORT PORTB
+#define DOWN_OUT 3
 
 #define E_STOP_IN_DDR DDRC
 #define E_STOP_IN_PORT PORTC

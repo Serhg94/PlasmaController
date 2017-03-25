@@ -131,8 +131,8 @@ void init()
 	SetBit(UP_OUT_DDR, UP_OUT);
 	SetBit(UP_OUT_PORT, UP_OUT);
 	//выход DOWN
-	SetBit(DOWN_OUT_DDR, UP_OUT);
-	SetBit(DOWN_OUT_PORT, UP_OUT);
+	SetBit(DOWN_OUT_DDR, DOWN_OUT);
+	SetBit(DOWN_OUT_PORT, DOWN_OUT);
 	
 	//вход E_STOP
 	ClearBit(E_STOP_IN_DDR, E_STOP_IN);
@@ -359,7 +359,13 @@ void setStates()
 
 void readStates()
 {
-	unsigned int new_v = (analogRead(64)/1023.0)*330;
+	//unsigned int new_v = (analogRead(64)/1023.0)*330;
+	//new_v = -1.043*new_v+375.583;
+	unsigned int new_v = analogRead(64);  
+	if (new_v<403)		new_v = 673.3 - 1.07516*new_v;
+	else if (new_v<830) new_v = 375.583-0.336452*new_v;
+	else				new_v = 421.6 - 0.387097*new_v;
+
 	if (real_voltage - new_v>VOLTAGE_GIST)
 	{
 		real_voltage = new_v;
