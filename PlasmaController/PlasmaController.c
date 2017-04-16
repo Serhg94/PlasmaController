@@ -33,8 +33,8 @@ bool down = 0;
 //volatile unsigned long delay_start_time;
 volatile bool delay_start_ena = 0;
 
-char stringOne[16];
-char stringTwo[16];
+char stringOne[17];
+char stringTwo[17];
 short display_mutex;
 volatile short display_changed;
 
@@ -87,63 +87,86 @@ void displayRefrash()
 	if (display_changed)
 	if (!display_mutex)
 	{
-		lcdClear();
-		sprintf(stringOne, "Real:%d\0", real_voltage);
-		lcdPuts(stringOne);
-		lcdGotoXY(1,0);
-		sprintf(stringOne, "Set: %d\0", set_voltage);
-		lcdPuts(stringOne);
+		//lcdClear();
+		//stringOne[16]='\0';
+		//stringTwo[16]='\0';
+		//sprintf(stringOne, " E CT:%3d", real_voltage);
+		//stringOne[0]=D_CHAR_CODE;
+		//stringOne[2]=I_CHAR_CODE;
+		//lcdPuts(stringOne);
+		//lcdGotoXY(1,0);
+		sprintf(stringTwo, " CTAH:%3d       ", set_voltage);
+		stringTwo[0]=Y_CHAR_CODE;
+		//lcdPuts(stringOne);
 		
-		lcdGotoXY(0,11);
+		//lcdGotoXY(0,12);
 		int d1 = set_delay;            // Get the integer part (678).
 		float f2 = set_delay - d1;     // Get fractional part (678.0123 - 678 = 0.0123).
 		int d2 = trunc(f2 * 10);   // Turn into integer (123).
-		sprintf(stringOne, "%d.%01d\0", d1, d2);
-		lcdPuts(stringOne);
+		sprintf(stringOne, " E CT:%3d   %d.%01d ", real_voltage, d1, d2);
+		stringOne[0]=D_CHAR_CODE;
+		stringOne[2]=I_CHAR_CODE;
+		//sprintf(stringOne, "%d.%01d\0", d1, d2);
+		//lcdPuts(stringOne);
 		if(!emerg_stop){
 			if (arc_on_out)
 			{
-				lcdGotoXY(0,9);
-				stringOne[0]=CHAR_THUNDER_CODE;
-				stringOne[1]=0;
-				lcdPuts(stringOne);
+				//lcdGotoXY(0,10);
+				stringOne[10]=CHAR_THUNDER_CODE;
+				//stringOne[1]=0;
+				//lcdPuts(stringOne);
 			}
 			if (torch_on_out)
 			{
-				lcdGotoXY(1,12);
-				stringOne[0]=TORCH_CHAR_CODE;
-				stringOne[1]=0;
-				lcdPuts(stringOne);
+				//lcdGotoXY(1,13);
+				stringTwo[13]=TORCH_CHAR_CODE;
+				//stringOne[1]=0;
+				//lcdPuts(stringOne);
 			}
 			if (up)
 			{
-				lcdGotoXY(1,9);
-				stringOne[0]=UP_ARROW_CODE;
-				stringOne[1]=0;
-				lcdPuts(stringOne);
+				//lcdGotoXY(1,10);
+				stringTwo[10]=UP_ARROW_CODE;
+				//stringOne[1]=0;
+				//lcdPuts(stringOne);
 			}
 			if (down)
 			{
-				lcdGotoXY(1,9);
-				stringOne[0]=DOWN_ARROW_CODE;
-				stringOne[1]=0;
-				lcdPuts(stringOne);
+				//lcdGotoXY(1,10);
+				stringTwo[10]=DOWN_ARROW_CODE;
+				//stringOne[1]=0;
+				//lcdPuts(stringOne);
 			}
 			if (delay_start_ena)
 			{
-				lcdGotoXY(1,9);
-				stringOne[0]=LOCK_CHAR_CODE;
-				stringOne[1]=0;
-				lcdPuts(stringOne);
+				//lcdGotoXY(1,10);
+				stringTwo[10]=LOCK_CHAR_CODE;
+				//stringOne[1]=0;
+				//lcdPuts(stringOne);
 			}
 		}
 		else
 		{
-			lcdGotoXY(1,12);
-			stringOne[0]=E_CHAR_CODE;
-			stringOne[1]=0;
-			lcdPuts(stringOne);
+			//lcdGotoXY(1,13);
+			stringTwo[13]='E';
+			//stringOne[1]=0;
+			//lcdPuts(stringOne);
 		}
+		//lcdClear();
+		stringOne[16]=0;
+		stringTwo[16]=0;
+		if (!lcdGotoXY(0,0))
+		{
+			lcdInit();
+			display_changed = 1;
+		}
+		lcdPuts(stringOne);
+		if (!lcdGotoXY(1,0))
+		{
+			lcdInit();
+			display_changed = 1;
+		}
+		lcdPuts(stringTwo);
 		display_changed=0;
 	}
 }
@@ -155,9 +178,11 @@ ISR (TIMER1_COMPA_vect)
 
 void init()
 {
-	lcdInit();
 	wdt_enable(WDTO_500MS);
-	
+	wdt_reset();
+	_delay_ms(50);
+	lcdInit();
+	wdt_reset();
 	set_voltage=eeprom_read_word(0);
 	set_delay=((float)eeprom_read_word(3))/10;
 	if ((set_voltage>MAX_VOLTAGE)||(set_voltage<MIN_VOLTAGE))
@@ -215,7 +240,17 @@ void init()
 	//настраиваем на срабатывание по любому изменению
 	EICRA |= (1<<ISC00)|(1<<ISC10);
 	//разрешаем внешнее прерывание
-	EIMSK |= (1<<INT0)|(1<<INT1);;
+	EIMSK |= (1<<INT0)|(1<<INT1);
+	
+	//инициализация начальных значений
+	if (PIND & (1 << PIND3))
+		torch_on = 1;
+	else
+		torch_on = 0;
+	if (PIND & (1 << PIND2))
+		arc_on = 0;
+	else
+		arc_on = 1;
 	
 	ENC_InitEncoder();
 	
@@ -224,7 +259,9 @@ void init()
 	lcdLoadCharacterf(DOWN_ARROW_CODE, down_arrow);
 	lcdLoadCharacterf(TORCH_CHAR_CODE, torch_char);
 	lcdLoadCharacterf(LOCK_CHAR_CODE, lock_char);
-	lcdLoadCharacterf(E_CHAR_CODE, e_char);
+	lcdLoadCharacterf(Y_CHAR_CODE, y_char);
+	lcdLoadCharacterf(D_CHAR_CODE, d_char);
+	lcdLoadCharacterf(I_CHAR_CODE, i_char);
 	
 	display_mutex = 0;
 	display_changed = 3;
@@ -366,6 +403,8 @@ void readStates()
 	else if (new_v<830) new_v = 375.583-0.336452*new_v;
 	else				new_v = 421.6 - 0.387097*new_v;
 
+	if (new_v < 70) new_v=0;
+
 	if (real_voltage - new_v>VOLTAGE_DIFF_TO_REFRASH)
 	{
 		real_voltage = new_v;
@@ -383,12 +422,12 @@ void readStates()
 				//display_changed|=4;
 			//}
 		//}
-		emerg_stop = 0;
+		emerg_stop = 1;
 	}
 	else
 	{
 		if (!emerg_stop) display_changed|=32;
-		emerg_stop = 1;
+		emerg_stop = 0;
 	}
 }
 

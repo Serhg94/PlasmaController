@@ -9,6 +9,25 @@
 #ifndef CUSTOM_SYMBOLS_H_
 #define CUSTOM_SYMBOLS_H_
 
+#define I_CHAR_CODE 8
+const char i_char[] PROGMEM = {B01110, B00000, B10001, B10011, B10101, B11001, B10001, B00000};
+//const char i_char[] PROGMEM = {
+//		B00100,
+//		B10101,
+//		B10001,
+//		B10011,
+//		B10101,
+//		B11001,
+//		B10001,
+//		B00000,
+//	};
+
+#define D_CHAR_CODE 9
+const char d_char[] PROGMEM = {B01111, B00101, B00101, B01001, B10001, B11111, 0x11, B00000};
+
+#define Y_CHAR_CODE 15
+const char y_char[] PROGMEM = {B10001, B10001, B10001, B01010, B00100, B01000, B10000, B00000};
+
 #define CHAR_THUNDER_CODE 10
 const char char_thunder[] PROGMEM = {
 	0b00000001,
@@ -64,16 +83,6 @@ const char lock_char[] PROGMEM = {
 	0b00011011,
 	0b00011111
 };
-#define E_CHAR_CODE 15
-const char e_char[] PROGMEM = {
-	0b00000110,
-	0b00001000,
-	0b00010000,
-	0b00010000,
-	0b00011111,
-	0b00010000,
-	0b00001000,
-	0b00000111
-};
+
 
 #endif /* CUSTOM_SYMBOLS_H_ */

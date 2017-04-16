@@ -16,7 +16,7 @@
 #define MIN_VOLTAGE 0
 #define MAX_DELAY 5
 #define MIN_DELAY 0
-#define VOLTAGE_GIST 5
+#define VOLTAGE_GIST 2
 #define VOLTAGE_DIFF_TO_REFRASH 2
 #define MIN_ARC_BY_ADC 80
 #define MAX_ARC_BY_ADC 170
@@ -29,15 +29,15 @@
 #define ARC_ON_OUT_DDR DDRB
 #define ARC_ON_OUT_PORT PORTB
 #define ARC_ON_OUT 4
+#define DOWN_OUT_DDR DDRD
+#define DOWN_OUT_PORT PORTD
+#define DOWN_OUT 0
 #define E_STOP_OUT_DDR DDRD
 #define E_STOP_OUT_PORT PORTD
-#define E_STOP_OUT 0
-#define UP_OUT_DDR DDRD
-#define UP_OUT_PORT PORTD
-#define UP_OUT 1
-#define DOWN_OUT_DDR DDRB
-#define DOWN_OUT_PORT PORTB
-#define DOWN_OUT 3
+#define E_STOP_OUT 1
+#define UP_OUT_DDR DDRB
+#define UP_OUT_PORT PORTB
+#define UP_OUT 3
 
 #define E_STOP_IN_DDR DDRC
 #define E_STOP_IN_PORT PORTC
