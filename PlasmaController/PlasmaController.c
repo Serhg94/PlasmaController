@@ -82,6 +82,18 @@ int analogRead(int An_pin)
 	return (An<<8) + An_pin;
 }
 
+void customSumbolLoad()
+{
+	lcdLoadCharacterf(CHAR_THUNDER_CODE, char_thunder);
+	lcdLoadCharacterf(UP_ARROW_CODE, up_arrow);
+	lcdLoadCharacterf(DOWN_ARROW_CODE, down_arrow);
+	lcdLoadCharacterf(TORCH_CHAR_CODE, torch_char);
+	lcdLoadCharacterf(LOCK_CHAR_CODE, lock_char);
+	lcdLoadCharacterf(Y_CHAR_CODE, y_char);
+	lcdLoadCharacterf(D_CHAR_CODE, d_char);
+	lcdLoadCharacterf(I_CHAR_CODE, i_char);
+}
+
 void displayRefrash()
 {
 	if (display_changed)
@@ -158,12 +170,14 @@ void displayRefrash()
 		if (!lcdGotoXY(0,0))
 		{
 			lcdInit();
+			customSumbolLoad();
 			display_changed = 1;
 		}
 		lcdPuts(stringOne);
 		if (!lcdGotoXY(1,0))
 		{
 			lcdInit();
+			customSumbolLoad();
 			display_changed = 1;
 		}
 		lcdPuts(stringTwo);
@@ -243,25 +257,18 @@ void init()
 	EIMSK |= (1<<INT0)|(1<<INT1);
 	
 	//инициализация начальных значений
-	if (PIND & (1 << PIND3))
-		torch_on = 1;
-	else
-		torch_on = 0;
-	if (PIND & (1 << PIND2))
-		arc_on = 0;
-	else
-		arc_on = 1;
+	//if (PIND & (1 << PIND3))
+	//	torch_on = 1;
+	//else
+	//	torch_on = 0;
+	//if (PIND & (1 << PIND2))
+	//	arc_on = 0;
+	//else
+	//	arc_on = 1;
 	
 	ENC_InitEncoder();
-	
-	lcdLoadCharacterf(CHAR_THUNDER_CODE, char_thunder);
-	lcdLoadCharacterf(UP_ARROW_CODE, up_arrow);
-	lcdLoadCharacterf(DOWN_ARROW_CODE, down_arrow);
-	lcdLoadCharacterf(TORCH_CHAR_CODE, torch_char);
-	lcdLoadCharacterf(LOCK_CHAR_CODE, lock_char);
-	lcdLoadCharacterf(Y_CHAR_CODE, y_char);
-	lcdLoadCharacterf(D_CHAR_CODE, d_char);
-	lcdLoadCharacterf(I_CHAR_CODE, i_char);
+
+	customSumbolLoad();
 	
 	display_mutex = 0;
 	display_changed = 3;

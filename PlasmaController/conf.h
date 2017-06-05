@@ -19,7 +19,7 @@
 #define VOLTAGE_GIST 2
 #define VOLTAGE_DIFF_TO_REFRASH 2
 #define MIN_ARC_BY_ADC 80
-#define MAX_ARC_BY_ADC 170
+#define MAX_ARC_BY_ADC 200
 
 #define DELAY_SHOW_TIME 2000
 
