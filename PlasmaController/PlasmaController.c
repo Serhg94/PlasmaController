@@ -20,6 +20,7 @@
 uint16_t set_voltage;
 uint16_t real_voltage = 0;
 float set_delay;
+float post_delay;
 
 bool emerg_stop = 0;
 volatile bool torch_on = 0;
@@ -112,10 +113,22 @@ void displayRefrash()
 		//lcdPuts(stringOne);
 		
 		//lcdGotoXY(0,12);
-		int d1 = set_delay;            // Get the integer part (678).
-		float f2 = set_delay - d1;     // Get fractional part (678.0123 - 678 = 0.0123).
-		int d2 = trunc(f2 * 10);   // Turn into integer (123).
-		sprintf(stringOne, " E CT:%3d   %d.%01d ", real_voltage, d1, d2);
+		int d1;            // Get the integer part (678).
+		float f2;
+		if(!emerg_stop)
+		{
+			d1 = set_delay;            // Get the integer part (678).
+			f2 = set_delay - d1;     // Get fractional part (678.0123 - 678 = 0.0123).
+			int d2 = trunc(f2 * 10);   // Turn into integer (123).
+			sprintf(stringOne, " E CT:%3d   %d.%01d ", real_voltage, d1, d2);
+		}
+		else
+		{
+			d1 = post_delay;            // Get the integer part (678).
+			f2 = post_delay - d1;     // Get fractional part (678.0123 - 678 = 0.0123).
+			int d2 = trunc(f2 * 10);   // Turn into integer (123).
+			sprintf(stringOne, " E CT:%3d  P%d.%01d ", real_voltage, d1, d2);
+		}
 		stringOne[0]=D_CHAR_CODE;
 		stringOne[2]=I_CHAR_CODE;
 		//sprintf(stringOne, "%d.%01d\0", d1, d2);
@@ -199,6 +212,7 @@ void init()
 	wdt_reset();
 	set_voltage=eeprom_read_word(0);
 	set_delay=((float)eeprom_read_word(3))/10;
+	post_delay=((float)eeprom_read_word(6))/10;
 	if ((set_voltage>MAX_VOLTAGE)||(set_voltage<MIN_VOLTAGE))
 	{
 		set_voltage = 140;
@@ -209,7 +223,11 @@ void init()
 		set_delay = 1.0;
 		eeprom_write_word(3, (uint16_t)(set_delay*10));
 	}
-	
+	if ((post_delay>MAX_DELAY)||(post_delay<MIN_DELAY))
+	{
+		post_delay = 1.0;
+		eeprom_write_word(6, (uint16_t)(post_delay*10));
+	}
 	
 	millis_init();
 	millis_resume();
@@ -295,19 +313,39 @@ void encoderProcess()
 	}
 		
 	rotation = ENC_PollEncoderT();
-	if (rotation==RIGHT_SPIN)
-	if (set_delay>MIN_DELAY) 
+	if (!emerg_stop)
 	{
-		set_delay-=0.1;
-		display_changed|=2;
-		eeprom_write_word(3, (uint16_t)(set_delay*10));
+		if (rotation==RIGHT_SPIN)
+		if (set_delay>MIN_DELAY)
+		{
+			set_delay-=0.1;
+			display_changed|=2;
+			eeprom_write_word(3, (uint16_t)(set_delay*10));
+		}
+		if (rotation==LEFT_SPIN)
+		if (set_delay<MAX_DELAY)
+		{
+			set_delay+=0.1;
+			display_changed|=2;
+			eeprom_write_word(3, (uint16_t)(set_delay*10));
+		}
 	}
-	if (rotation==LEFT_SPIN)
-	if (set_delay<MAX_DELAY) 
+	else
 	{
-		set_delay+=0.1;
-		display_changed|=2;
-		eeprom_write_word(3, (uint16_t)(set_delay*10));
+		if (rotation==RIGHT_SPIN)
+		if (post_delay>MIN_DELAY)
+		{
+			post_delay-=0.1;
+			display_changed|=2;
+			eeprom_write_word(6, (uint16_t)(post_delay*10));
+		}
+		if (rotation==LEFT_SPIN)
+		if (post_delay<MAX_DELAY)
+		{
+			post_delay+=0.1;
+			display_changed|=2;
+			eeprom_write_word(6, (uint16_t)(post_delay*10));
+		}
 	}
 }
 
@@ -345,11 +383,13 @@ void logicProcess()
 			display_changed|=4;
 			delay_start_ena = 0;
 			arc_on_out = 1;
+			//обнуляем таймер для отсчета постзадержки - задержки между началом движения плазмотрона и началом регулировки высоты
+			millis_reset();
 		}
 		//если дуга пропала или с компа пропал сигнал включения факела - сигнал на комп
 		if ((!arc_on)||(!torch_on_out)) arc_on_out = 0;
-		//рулим высотой только если дуга есть, задержка прошла и сигнал включения факела есть
-		if (arc_on_out){
+		//рулим высотой только если дуга есть, задержка прошла, сигнал включения факела есть и постзадержка тоже прошла
+		if ((arc_on_out)&&(millis()>post_delay*1000)){
 			if (real_voltage>set_voltage+VOLTAGE_GIST)
 			{
 				if ((up)||(!down)) display_changed|=64;
@@ -362,7 +402,7 @@ void logicProcess()
 				up=1;
 				down=0;
 			}
-			if (real_voltage==set_voltage)
+			if ((real_voltage>=set_voltage-VOLTAGE_GIST)&&(real_voltage<=set_voltage+VOLTAGE_GIST))
 			{
 				if ((up)||(down)) display_changed|=64;
 				up=0;
